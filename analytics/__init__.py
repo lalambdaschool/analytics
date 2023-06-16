@@ -21,7 +21,7 @@ gc = gspread.oauth(
 registrations = gc.open_by_url(
     "https://docs.google.com/spreadsheets/d/149pgsbW9WTarfdjIG22nr6bbRsMCMfGfWNlhadH_6CI"
 ).get_worksheet(0)
-nicknames = registrations.col_values(8)[1:]
+nicknames = registrations.col_values(12)[1:]
 nicknames = set(map(lambda x: re.findall(r"\w+", x)[-1], nicknames))
 
 with Client(
@@ -33,10 +33,11 @@ with Client(
     # Get the chat members
     chat_members = client.get_chat_members(channel_username, limit=members_count)
 
-    # Filter the members who joined in the last 30 days
-    recent_members = {
-        member.user.username for member in chat_members if member.joined_date > to_date
-    }
+    recent_members = filter(lambda x: x.joined_date > to_date, chat_members)
 
-    for nickname in recent_members - nicknames:
-        print(nickname)
+    unregistered_members = filter(
+        lambda x: x.user.username not in nicknames, recent_members
+    )
+
+    for member in unregistered_members:
+        print(f"@{member.user.username} ({member.joined_date})")
